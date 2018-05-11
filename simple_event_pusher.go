@@ -19,10 +19,11 @@ func main() {
 		http.HandleFunc("/channel", pts.ServeSession(channel))
 
 		// receive incoming cc results from redis
+		// redis is contained here, nowhere else
 		go generateMsgs(pts)
 
 		// redis msgs push to browser
-		go pts.pushMsgs()
+		// go pts.pushMsgs()
 
 		// listen for new connections
 		http.Serve(
@@ -64,6 +65,8 @@ func (pts *PushToSession) ServeSession(sessionChannel string) func(http.Response
 		defer pts.close()
 		setHeaders(&w)
 		pushConn := pts.eventPusher.Handler(sessionChannel)
+		// redis msgs push to browser
+		go pts.pushMsgs()
 		pushConn.ServeHTTP(w, r)
 	}
 }
