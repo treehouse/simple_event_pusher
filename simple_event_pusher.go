@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var incomingPort = ":8080";
+var incomingPort = ":8080"
 var channel = "hello_world"
 
 // Boilerplate for eventsource package
@@ -78,8 +78,6 @@ func openTcpConn(f func(net.Listener)) {
 	defer tcp.Close()
 	f(tcp)
 }
-
-
 
 func makeEvtPusher() (*es.Server, func()) {
 	pusher := es.NewServer()
