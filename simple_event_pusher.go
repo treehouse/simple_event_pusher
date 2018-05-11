@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/donovanhide/eventsource"
+	es "github.com/donovanhide/eventsource"
 	// "github.com/gorilla/mux"
 	"net"
 	"net/http"
 	"time"
 )
 
-var channel = "hello_world";
+var incomingPort = ":8080";
+var channel = "hello_world"
 
 // Boilerplate for eventsource package
 type eventPusherMessage struct {
@@ -22,55 +23,71 @@ func (e *eventPusherMessage) Id() string    { return "" }
 func (e *eventPusherMessage) Event() string { return e.EventStr }
 func (e *eventPusherMessage) Data() string  { return e.DataStr }
 
+
 func main() {
-	fmt.Println("Hello World")
+	openTcpConn(func(tcpConn net.Listener) {
+		eventPusher, close := makeEvtPusher();
+		msgChan := make(chan eventPusherMessage, 1)
 
-	pusher := eventsource.NewServer()
-	defer pusher.Close()
+		// assign new connections to uuid channel
+		http.HandleFunc("/channel", makeHandlerFunc(eventPusher, close))
 
-	l, err := net.Listen("tcp", ":8080")
-	
-	if err != nil {
-			return
-	}
-	defer l.Close()
+		// listen for new connections
+		go http.Serve(tcpConn, nil)
 
+		// receive incoming cc results from redis
+		go generateMsgs(msgChan)
 
-	http.HandleFunc("/channel", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(r.RequestURI)
-		w.Header().Add("Content-Type", "application/json")
-		w.Header().Add("Access-Control-Allow-Origin", "*")
-		bcastChan := pusher.Handler(channel)
-		bcastChan.ServeHTTP(w, r)
+		// redis msgs push to browser
+		pushMsgs(msgChan, eventPusher)
 	})
+}
 
-	// server := &http.Server{
-	// 	Addr:         ":3001",
-	// 	Handler:      muxApp, // all this needs is something that fulfills the Handler interface
-	// 	WriteTimeout: 15 * time.Second,
-	// 	ReadTimeout:  15 * time.Second,
-	// }
-
-	msgChan := make(chan eventPusherMessage, 1)
-
-	go http.Serve(l, nil)
-
-	// emit a message every two seconds
-	go func() {
-		for {
-			time.Sleep(2 * time.Second)
-			msgChan <- eventPusherMessage{
-				EventStr: "message",
-				Channel:  channel,
-				DataStr:  "{\"test\":\"message\"}",
-			}
-		}
-	}()
-
-	for {
-		nextMsg := <-msgChan
-		fmt.Println("go channel works")
-		pusher.Publish([]string{nextMsg.Channel}, &nextMsg)
+func openTcpConn(f func(net.Listener)) {
+	tcp, err := net.Listen("tcp", incomingPort)
+	if err != nil {
+		return
 	}
+	defer tcp.Close()
+	f(tcp)
+}
 
+
+
+func makeEvtPusher() (*es.Server, func()) {
+	pusher := es.NewServer()
+	return pusher, pusher.Close
+}
+
+func setHeaders(w *http.ResponseWriter) {
+	(*w).Header().Add("Content-Type", "application/json")
+	(*w).Header().Add("Access-Control-Allow-Origin", "*")
+}
+
+func makeHandlerFunc(pushServer *es.Server, close func()) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer close()
+		setHeaders(&w)
+		bcastChan := pushServer.Handler(channel)
+		bcastChan.ServeHTTP(w, r)
+	}
+}
+
+func generateMsgs(pipeToPush chan eventPusherMessage) {
+	for {
+		time.Sleep(2 * time.Second)
+		pipeToPush <- eventPusherMessage{
+			EventStr: "message",
+			Channel:  channel,
+			DataStr:  "{\"test\":\"message\"}",
+		}
+	}
+}
+
+func pushMsgs(msgs chan eventPusherMessage, eventer *es.Server) {
+	for {
+		nextMsg := <-msgs
+		fmt.Println("go channel works")
+		eventer.Publish([]string{nextMsg.Channel}, &nextMsg)
+	}
 }
