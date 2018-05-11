@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	es "github.com/donovanhide/eventsource"
-	// "github.com/gorilla/mux"
 	"net"
 	"net/http"
 	"time"
@@ -11,6 +10,27 @@ import (
 
 var incomingPort = ":8080"
 var channel = "hello_world"
+
+func main() {
+	openTcpConn(func(tcpConn net.Listener) {
+		pts := NewPushToSessionPipe()
+
+		// assign new connections to uuid channel
+		http.HandleFunc("/channel", pts.ServeSession(channel))
+
+		// receive incoming cc results from redis
+		go generateMsgs(pts)
+
+		// redis msgs push to browser
+		go pts.pushMsgs()
+
+		// listen for new connections
+		http.Serve(
+			tcpConn,
+			nil, /* Handler (DefaultServeMux if nil, could drop gorrilla in here) */
+		)
+	})
+}
 
 // Boilerplate for eventsource package
 type eventPusherMessage struct {
@@ -30,12 +50,12 @@ type PushToSession struct {
 }
 
 func NewPushToSessionPipe() *PushToSession {
-	pusher, close := makeEvtPusher()
+	pusher := es.NewServer()
 	eventChannel := make(chan *eventPusherMessage, 1)
 	return &PushToSession{
 		eventPusher:     pusher,
 		redisToPushChan: eventChannel,
-		close:           close,
+		close:           pusher.Close,
 	}
 }
 
@@ -52,36 +72,23 @@ func (pts *PushToSession) SendToPush(msg *eventPusherMessage) {
 	pts.redisToPushChan <- msg
 }
 
-func main() {
-	openTcpConn(func(tcpConn net.Listener) {
-		pts := NewPushToSessionPipe()
-
-		// assign new connections to uuid channel
-		http.HandleFunc("/channel", pts.ServeSession(channel))
-
-		// listen for new connections
-		go http.Serve(tcpConn, nil)
-
-		// receive incoming cc results from redis
-		go generateMsgs(pts)
-
-		// redis msgs push to browser
-		pushMsgs(pts)
-	})
+func (pts *PushToSession) pushMsgs() {
+	for {
+		nextMsg := <-pts.redisToPushChan
+		fmt.Println("go channel works")
+		pts.eventPusher.Publish([]string{nextMsg.Channel}, nextMsg)
+	}
 }
 
-func openTcpConn(f func(net.Listener)) {
+func openTcpConn(mux func(net.Listener)) {
 	tcp, err := net.Listen("tcp", incomingPort)
 	if err != nil {
 		return
 	}
 	defer tcp.Close()
-	f(tcp)
-}
 
-func makeEvtPusher() (*es.Server, func()) {
-	pusher := es.NewServer()
-	return pusher, pusher.Close
+	// feed open tcp connection to potential multiplex
+	mux(tcp)
 }
 
 func setHeaders(w *http.ResponseWriter) {
@@ -97,13 +104,5 @@ func generateMsgs(pts *PushToSession) {
 			Channel:  channel,
 			DataStr:  "{\"test\":\"message\"}",
 		})
-	}
-}
-
-func pushMsgs(pts *PushToSession) {
-	for {
-		nextMsg := <-pts.redisToPushChan
-		fmt.Println("go channel works")
-		pts.eventPusher.Publish([]string{nextMsg.Channel}, nextMsg)
 	}
 }
