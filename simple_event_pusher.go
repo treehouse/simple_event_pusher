@@ -23,23 +23,50 @@ func (e *eventPusherMessage) Id() string    { return "" }
 func (e *eventPusherMessage) Event() string { return e.EventStr }
 func (e *eventPusherMessage) Data() string  { return e.DataStr }
 
+type PushToSession struct {
+	eventPusher     *es.Server
+	redisToPushChan chan *eventPusherMessage
+	close           func()
+}
+
+func NewPushToSessionPipe() *PushToSession {
+	pusher, close := makeEvtPusher()
+	eventChannel := make(chan *eventPusherMessage, 1)
+	return &PushToSession{
+		eventPusher:     pusher,
+		redisToPushChan: eventChannel,
+		close:           close,
+	}
+}
+
+func (pts *PushToSession) ServeSession(sessionChannel string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer pts.close()
+		setHeaders(&w)
+		pushConn := pts.eventPusher.Handler(sessionChannel)
+		pushConn.ServeHTTP(w, r)
+	}
+}
+
+func (pts *PushToSession) SendToPush(msg *eventPusherMessage) {
+	pts.redisToPushChan <- msg
+}
 
 func main() {
 	openTcpConn(func(tcpConn net.Listener) {
-		eventPusher, close := makeEvtPusher();
-		msgChan := make(chan eventPusherMessage, 1)
+		pts := NewPushToSessionPipe()
 
 		// assign new connections to uuid channel
-		http.HandleFunc("/channel", makeHandlerFunc(eventPusher, close))
+		http.HandleFunc("/channel", pts.ServeSession(channel))
 
 		// listen for new connections
 		go http.Serve(tcpConn, nil)
 
 		// receive incoming cc results from redis
-		go generateMsgs(msgChan)
+		go generateMsgs(pts)
 
 		// redis msgs push to browser
-		pushMsgs(msgChan, eventPusher)
+		pushMsgs(pts)
 	})
 }
 
@@ -64,30 +91,21 @@ func setHeaders(w *http.ResponseWriter) {
 	(*w).Header().Add("Access-Control-Allow-Origin", "*")
 }
 
-func makeHandlerFunc(pushServer *es.Server, close func()) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer close()
-		setHeaders(&w)
-		bcastChan := pushServer.Handler(channel)
-		bcastChan.ServeHTTP(w, r)
-	}
-}
-
-func generateMsgs(pipeToPush chan eventPusherMessage) {
+func generateMsgs(pts *PushToSession) {
 	for {
 		time.Sleep(2 * time.Second)
-		pipeToPush <- eventPusherMessage{
+		pts.SendToPush(&eventPusherMessage{
 			EventStr: "message",
 			Channel:  channel,
 			DataStr:  "{\"test\":\"message\"}",
-		}
+		})
 	}
 }
 
-func pushMsgs(msgs chan eventPusherMessage, eventer *es.Server) {
+func pushMsgs(pts *PushToSession) {
 	for {
-		nextMsg := <-msgs
+		nextMsg := <-pts.redisToPushChan
 		fmt.Println("go channel works")
-		eventer.Publish([]string{nextMsg.Channel}, &nextMsg)
+		pts.eventPusher.Publish([]string{nextMsg.Channel}, nextMsg)
 	}
 }
