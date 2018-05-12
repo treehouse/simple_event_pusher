@@ -3,30 +3,54 @@ package main
 import (
 	"fmt"
 	es "github.com/donovanhide/eventsource"
-	//"github.com/gorilla/mux"
 	"net"
 	"net/http"
 	"time"
 	"regexp"
+	"sync"
 )
 
 var incomingPort = ":8080"
-var channel = "hello_world"
-var matchChannel = regexp.MustCompile(`^/channel/([\w\_]+)$`)
+var matchChannel = regexp.MustCompile(`^/channel/([^/]+)$`)
 
-var connections = make(map[string]*PushToSession)
+// connections are added to this map so redis can push to these connections
+type Connections struct {
+	list map[string]*PushToSession
+	mu sync.Mutex
+}
+
+func (c *Connections) Add(sessionName string, pts *PushToSession) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.list[sessionName] = pts
+}
+
+func (c *Connections) Delete(sessionName string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.list, sessionName)
+}
+
+func (c *Connections) SendToPush(channel string, msg *eventPusherMessage) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if pts, ok := c.list[channel]; ok {
+    pts.SendToPush(msg)
+	}
+}
 
 func main() {
 	openTcpConn(func(tcpConn net.Listener) {
 
+		var connections = &Connections{list: map[string]*PushToSession{}}
 		// assign new connections to uuid channel
 		// need some type of second matcher here to split this url into two routes
 		// a main channel route and a session subroute
-		http.HandleFunc("/channel/hello_world", ServeSession())
+		http.HandleFunc("/channel/", ServeSession(connections))
 
 		// receive incoming cc results from redis
 		// redis is contained here, nowhere else
-		go generateMsgs()
+		go generateMsgs(connections)
 
 		// listen for new connections
 		http.Serve(
@@ -85,11 +109,10 @@ func getChannel(r *http.Request) string {
 }
 
 func setHeaders(w *http.ResponseWriter) {
-	(*w).Header().Add("Content-Type", "application/json")
 	(*w).Header().Add("Access-Control-Allow-Origin", "*")
 }
 
-func ServeSession() func(http.ResponseWriter, *http.Request) {
+func ServeSession(conns *Connections) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		
 		
@@ -98,11 +121,11 @@ func ServeSession() func(http.ResponseWriter, *http.Request) {
 		
 		pts := NewPushToSessionPipe() // create pts conn for session
 		defer pts.close()
-		connections[sessionChannel] = pts
+		conns.Add(sessionChannel, pts)
 		
 		pushConn := pts.eventPusher.Handler(sessionChannel)
 		// removes pts from session collection when connection is closed by browser
-		defer delete(connections, sessionChannel)
+		defer conns.Delete(sessionChannel)
 
 		// redis msgs push to browser
 		go pts.pushMsgs()
@@ -123,20 +146,24 @@ func openTcpConn(mux func(net.Listener)) {
 	}
 	defer tcp.Close()
 
-	// feed open tcp connection to potential multiplex
 	mux(tcp)
 }
 
-func generateMsgs() {
+func generateMsgs(conns *Connections) {
+	binarySwitch := true // testing how this handles multiple channels
 	for {
 		time.Sleep(2 * time.Second)
-		fmt.Println(connections[channel]) // incoming redis msg will have channel (session uuid)
-		if(connections[channel] != nil) {
-			connections[channel].SendToPush(&eventPusherMessage{
-				EventStr: "message",
-				Channel:  channel,
-				DataStr:  "{\"test\":\"message\"}",
-			})
+		var channel string;
+		if binarySwitch {
+			channel = "hello-world"
+		} else {
+			channel = "hello_multiplex"
 		}
+		binarySwitch = !binarySwitch
+		conns.SendToPush(channel, &eventPusherMessage{
+			EventStr: "message",
+			Channel:  channel,
+			DataStr:  "{\"test\":\"message\"}",
+		})
 	}
 }
