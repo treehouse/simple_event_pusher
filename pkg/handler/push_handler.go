@@ -1,8 +1,8 @@
 package handler
 
 import (
-	push "github.com/nicolasjhampton/simple_event_pusher/internal/connection"
-	mux "github.com/nicolasjhampton/simple_event_pusher/pkg/push_mux"
+	push "github.com/treehouse/simple_event_pusher/internal/connection"
+	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	"net/http"
 	"regexp"
 )

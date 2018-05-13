@@ -3,7 +3,7 @@ package push
 import (
 	"fmt"
 	es "github.com/donovanhide/eventsource"
-	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"net/http"
 )
 
@@ -38,7 +38,7 @@ func (c *Connection) SendToPush(msg *event.Message) {
 func (c *Connection) Msgs() {
 	for {
 		nextMsg := <-c.redisToPushChan
-		fmt.Println("go channel works")
+		fmt.Println(nextMsg)
 		c.eventPusher.Publish([]string{nextMsg.Channel}, nextMsg)
 	}
 }

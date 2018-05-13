@@ -1,7 +1,7 @@
 package push
 
 import (
-	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"sync"
 )
 
@@ -31,10 +31,10 @@ func (cl *ConnList) Delete(sessionName string) {
 	delete(cl.list, sessionName)
 }
 
-func (cl *ConnList) SendToPush(sessionName string, msg *event.Message) {
+func (cl *ConnList) SendToPush(msg *event.Message) {
 	cl.mu.RLock()
 	defer cl.mu.RUnlock()
-	if conn, ok := cl.list[sessionName]; ok {
+	if conn, ok := cl.list[msg.Channel]; ok {
 		conn.SendToPush(msg)
 	}
 }

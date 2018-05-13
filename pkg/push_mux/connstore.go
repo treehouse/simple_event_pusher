@@ -1,8 +1,8 @@
 package push_mux
 
 import (
-	push "github.com/nicolasjhampton/simple_event_pusher/internal/connection"
-	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
+	push "github.com/treehouse/simple_event_pusher/internal/connection"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
 )
 
 type AddStruct struct {
@@ -10,16 +10,16 @@ type AddStruct struct {
 	Conn *push.Connection
 }
 
-type SendStruct struct {
-	Key string
-	Msg *event.Message
-}
+// type SendStruct struct {
+// 	Key string
+// 	Msg *event.Message
+// }
 
 type ConnStore struct {
 	connList   *push.ConnList
 	AddConn    chan AddStruct
 	DeleteConn chan string
-	SendToPush chan SendStruct
+	SendToPush chan *event.Message
 }
 
 func New() *ConnStore {
@@ -27,7 +27,7 @@ func New() *ConnStore {
 		connList:   push.NewConnList(),
 		AddConn:    make(chan AddStruct, 1),
 		DeleteConn: make(chan string),
-		SendToPush: make(chan SendStruct, 1),
+		SendToPush: make(chan *event.Message, 1),
 	}
 }
 
@@ -39,8 +39,8 @@ func (cs ConnStore) Delete(channel string) {
 	cs.DeleteConn <- channel
 }
 
-func (cs ConnStore) Send(channel string, m *event.Message) {
-	cs.SendToPush <- SendStruct{Key: channel, Msg: m}
+func (cs ConnStore) Send(msg *event.Message) {
+	cs.SendToPush <- msg
 }
 
 func (cs ConnStore) Run() {
@@ -53,9 +53,9 @@ func (cs ConnStore) Run() {
 		case key := <-cs.DeleteConn:
 			cs.connList.Delete(key)
 		case outgoingMsg := <-cs.SendToPush:
-			key := outgoingMsg.Key
-			msg := outgoingMsg.Msg
-			cs.connList.SendToPush(key, msg)
+			// key := outgoingMsg.Channel
+			msg := outgoingMsg
+			cs.connList.SendToPush(msg)
 		}
 	}
 }
