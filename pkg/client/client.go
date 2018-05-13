@@ -1,0 +1,40 @@
+package client
+
+import (
+	"encoding/json"
+	"fmt"
+	event "github.com/treehouse/simple_event_pusher/internal/event"
+	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
+)
+
+type MessageInterface interface {
+	GetChannel() string
+	GetPayload() string
+}
+
+type Incoming interface {
+	Close() error
+	ReceiveMessage() (MessageInterface, error)
+}
+
+// PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
+func ListenForMsgs(cs *mux.ConnStore, dataSource Incoming) {
+
+	defer dataSource.Close()
+
+	for {
+		msg, err := dataSource.ReceiveMessage()
+		epmsg := event.Message{}
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		fmt.Printf("got payload from redis pubsub %+v\n", msg.GetPayload())
+		if err := json.Unmarshal([]byte(msg.GetPayload()), &epmsg); err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		go cs.Send(&epmsg)
+	}
+}

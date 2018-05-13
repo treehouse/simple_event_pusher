@@ -1,16 +1,31 @@
 package client
 
 import (
-	event "github.com/treehouse/simple_event_pusher/internal/event"
-	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	"github.com/go-redis/redis"
-	"encoding/json"
-	"fmt"
 )
 
-type Incoming interface {
-	Close() error
-	ReceiveMessage() (*redis.Message, error)
+type RedisMessage redis.Message
+
+func (r RedisMessage) GetChannel() string {
+	return r.Channel
+}
+
+func (r RedisMessage) GetPayload() string {
+	return r.Payload
+}
+
+type Subscription struct {
+	pubsub *redis.PubSub
+}
+
+func (s Subscription) Close() error {
+	return s.Close()
+}
+
+func (s Subscription) ReceiveMessage() (MessageInterface, error) {
+	msg, err := s.pubsub.ReceiveMessage()
+	msi := RedisMessage(*msg)
+	return msi, err
 }
 
 func Redis(redisAddr string, redisChannel string) Incoming {
@@ -20,27 +35,6 @@ func Redis(redisAddr string, redisChannel string) Incoming {
 		DB:       0,  // use default DB
 	})
 	pubsub := rClient.Subscribe(redisChannel)
-	return pubsub
+	return Subscription{ pubsub: pubsub }
 }
 
-// PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
-func ListenForMsgs(cs *mux.ConnStore, dataSource Incoming) {
-	
-	defer dataSource.Close()
-
-	for {
-		msg, err := dataSource.ReceiveMessage();
-		epmsg := event.Message{} 
-		if err != nil {
-			fmt.Println(err)
-			continue
-		}
-		fmt.Printf("got payload from redis pubsub %+v\n", msg.Payload)
-		if err := json.Unmarshal([]byte(msg.Payload), &epmsg); err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		go cs.Send(&epmsg)
-	}
-}

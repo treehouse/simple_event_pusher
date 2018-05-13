@@ -5,8 +5,8 @@ import (
 	handler "github.com/treehouse/simple_event_pusher/pkg/handler"
 	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	"net/http"
-	"time"
 	"os"
+	"time"
 )
 
 const (
@@ -27,9 +27,8 @@ func main() {
 		ReadTimeout: 15 * time.Second,
 	}
 
-
 	// runs on a single thread, manages connection list
-	// data structure uses a RWMutex to provide concurrent reads 
+	// data structure uses a RWMutex to provide concurrent reads
 	// and threadsafe on writes
 	connMux := mux.New()
 	go connMux.Run()
@@ -40,7 +39,7 @@ func main() {
 	// all redis msgs come in on a single thread
 	// and leave on separate goroutines
 	go cli.ListenForMsgs(
-		connMux, 
+		connMux,
 		cli.Redis(redisAddr, redisPubsubChannel),
 	)
 
@@ -48,7 +47,6 @@ func main() {
 }
 
 // PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
-
 
 func envDefault(key, def string) string {
 	val := os.Getenv(key)

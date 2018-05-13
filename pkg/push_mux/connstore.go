@@ -10,11 +10,6 @@ type AddStruct struct {
 	Conn *push.Connection
 }
 
-// type SendStruct struct {
-// 	Key string
-// 	Msg *event.Message
-// }
-
 type ConnStore struct {
 	connList   *push.ConnList
 	AddConn    chan AddStruct
@@ -53,7 +48,6 @@ func (cs ConnStore) Run() {
 		case key := <-cs.DeleteConn:
 			cs.connList.Delete(key)
 		case outgoingMsg := <-cs.SendToPush:
-			// key := outgoingMsg.Channel
 			msg := outgoingMsg
 			cs.connList.SendToPush(msg)
 		}

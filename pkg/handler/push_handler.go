@@ -21,9 +21,11 @@ func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *htt
 
 		sessionChannel := getChannel(r)
 
-		conn := push.NewConnection(); defer conn.Close();
+		conn := push.NewConnection()
+		defer conn.Close()
 
-		cs.Add(sessionChannel, conn); defer cs.Delete(sessionChannel);
+		cs.Add(sessionChannel, conn)
+		defer cs.Delete(sessionChannel)
 
 		push := conn.Handler(sessionChannel)
 
