@@ -24,12 +24,14 @@ func ListenForMsgs(cs *mux.ConnStore, dataSource Incoming) {
 
 	for {
 		msg, err := dataSource.ReceiveMessage()
-		epmsg := event.Message{}
+		
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
 		fmt.Printf("got payload from redis pubsub %+v\n", msg.GetPayload())
+
+		epmsg := event.Message{}
 		if err := json.Unmarshal([]byte(msg.GetPayload()), &epmsg); err != nil {
 			fmt.Println(err)
 			continue

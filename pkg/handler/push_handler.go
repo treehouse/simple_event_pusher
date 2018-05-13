@@ -7,19 +7,25 @@ import (
 	"regexp"
 )
 
-var channelRegex = regexp.MustCompile(`^/channel/([^/]+)$`)
+var chanRegex = regexp.MustCompile(`^/channel/([^/]+)$`)
 
 func getChannel(r *http.Request) string {
-	return channelRegex.FindStringSubmatch(r.RequestURI)[1]
+	if channelSlice := chanRegex.FindStringSubmatch(r.RequestURI); len(channelSlice) > 1 {
+		return channelSlice[1]
+	}
+	return ""
 }
 
 func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		sessionChannel := getChannel(r)
+		if sessionChannel == "" {
+			return 
+		}
+
 		if cors != "" {
 			w.Header().Add("Access-Control-Allow-Origin", cors)
 		}
-
-		sessionChannel := getChannel(r)
 
 		conn := push.NewConnection()
 		defer conn.Close()
