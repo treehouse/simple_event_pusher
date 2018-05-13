@@ -4,36 +4,45 @@ import (
 	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
 	handler "github.com/nicolasjhampton/simple_event_pusher/pkg/handler"
 	mux "github.com/nicolasjhampton/simple_event_pusher/pkg/push_mux"
-	tcp "github.com/nicolasjhampton/simple_event_pusher/pkg/tcp"
-	"net"
 	"net/http"
 	"time"
+	"os"
+)
+
+const (
+	DEFAULT_PORT                        = "8080"
+	DEFAULT_REDIS_ADDR                  = "localhost:6379"
+	DEFAULT_REDIS_PUBSUB_CHANNEL        = "event_pusher"
+	DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN = "http://localhost:3000"
 )
 
 func main() {
-	tcp.OpenPort(":8080", func(tcpConn net.Listener) {
+	port := envDefault("EVENT_PUSHER_PORT", DEFAULT_PORT)
+	// redisAddr := envDefault("EVENT_PUSHER_REDIS_ADDR", DEFAULT_REDIS_ADDR)
+	// redisPubsubChannel := envDefault("EVENT_PUSHER_REDIS_PUBSUB_CHANNEL", DEFAULT_REDIS_PUBSUB_CHANNEL)
+	accessControlAllowOrigin := envDefault("EVENT_PUSHER_ACCESS_CONTROL_ALLOW_ORIGIN", DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN)
 
-		var connMux = mux.New()
+	s := &http.Server{
+		Addr:        port,
+		ReadTimeout: 15 * time.Second,
+	}
 
-		// runs on a single thread and manages connection list
-		// access as many threads read/write connections via channels
-		// to this thread
-		go connMux.Run()
-		// assign new connections to uuid channel
-		// need some type of second matcher here to split this url into two routes
-		// a main channel route and a session subroute
-		http.HandleFunc("/channel/", handler.ServeSession(connMux))
+	var connMux = mux.New()
 
-		// receive incoming cc results from redis
-		// redis is contained here, nowhere else
-		go generateMsgs(connMux)
+	// runs on a single thread and manages connection list
+	// access as many threads read/write connections via channels
+	// to this thread
+	go connMux.Run()
 
-		// listen for new connections
-		http.Serve(
-			tcpConn,
-			nil, /* Handler (DefaultServeMux if nil) */
-		)
-	})
+	// creates a new thread for each new session connection
+	http.HandleFunc("/channel/", handler.ServeSession(connMux, accessControlAllowOrigin))
+
+	// all redis msgs come in on a single thread
+	// redis is contained here, nowhere else
+	go generateMsgs(connMux)
+
+
+	s.ListenAndServe()
 }
 
 //
@@ -51,10 +60,19 @@ func generateMsgs(cs *mux.ConnStore) {
 		binarySwitch = !binarySwitch
 		/***************************************/
 
-		cs.Send(channel, &event.Message{
+		go cs.Send(channel, &event.Message{
 			EventStr: "message",
 			Channel:  channel,
 			DataStr:  "{\"test\":\"message\"}",
 		})
 	}
 }
+
+func envDefault(key, def string) string {
+	val := os.Getenv(key)
+	if len(val) == 0 {
+		return def
+	}
+	return val
+}
+

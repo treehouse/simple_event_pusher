@@ -13,3 +13,13 @@ func OpenPort(incomingPort string, open func(net.Listener)) {
 
 	open(tcp)
 }
+
+// this is dead code now, keeping just in case
+
+// tcp.OpenPort(":8080", func(tcpConn net.Listener) {
+// 	listen for new connections
+// 	http.Serve(
+// 		tcpConn,
+// 		nil, /* Handler (DefaultServeMux if nil) */
+// 	)
+// })
