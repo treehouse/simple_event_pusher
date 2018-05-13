@@ -1,21 +1,21 @@
 package push
 
 import (
-	"sync"
 	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
+	"sync"
 )
 
 type ConnMap map[string]*Connection
 
 type ConnList struct {
 	list ConnMap
-	mu sync.RWMutex
+	mu   sync.RWMutex
 }
 
 func NewConnList() *ConnList {
 	return &ConnList{
 		list: ConnMap{},
-		mu: sync.RWMutex{},
+		mu:   sync.RWMutex{},
 	}
 }
 
@@ -35,6 +35,6 @@ func (cl *ConnList) SendToPush(sessionName string, msg *event.Message) {
 	cl.mu.RLock()
 	defer cl.mu.RUnlock()
 	if conn, ok := cl.list[sessionName]; ok {
-    conn.SendToPush(msg)
+		conn.SendToPush(msg)
 	}
 }

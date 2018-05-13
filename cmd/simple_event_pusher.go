@@ -1,15 +1,14 @@
 package main
 
 import (
-	"net"
-	"net/http"
-	"time"
+	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
 	handler "github.com/nicolasjhampton/simple_event_pusher/pkg/handler"
 	mux "github.com/nicolasjhampton/simple_event_pusher/pkg/push_mux"
 	tcp "github.com/nicolasjhampton/simple_event_pusher/pkg/tcp"
-	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
+	"net"
+	"net/http"
+	"time"
 )
-
 
 func main() {
 	tcp.OpenPort(":8080", func(tcpConn net.Listener) {
@@ -37,14 +36,13 @@ func main() {
 	})
 }
 
-
 //
 func generateMsgs(cs *mux.ConnStore) {
 	binarySwitch := true // testing how this handles multiple channels
 	for {
 		/** mock msgs code, replace with redis */
 		time.Sleep(2 * time.Second)
-		var channel string;
+		var channel string
 		if binarySwitch {
 			channel = "hello-world"
 		} else {
@@ -52,7 +50,7 @@ func generateMsgs(cs *mux.ConnStore) {
 		}
 		binarySwitch = !binarySwitch
 		/***************************************/
-		
+
 		cs.Send(channel, &event.Message{
 			EventStr: "message",
 			Channel:  channel,

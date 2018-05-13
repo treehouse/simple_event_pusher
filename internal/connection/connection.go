@@ -2,9 +2,9 @@ package push
 
 import (
 	"fmt"
-	"net/http"
 	es "github.com/donovanhide/eventsource"
 	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
+	"net/http"
 )
 
 type Connection struct {
@@ -13,9 +13,7 @@ type Connection struct {
 	close           func()
 }
 
-
-
-func NewConnection() *Connection {  // rename to New in separate package later
+func NewConnection() *Connection { // rename to New in separate package later
 	pusher := es.NewServer()
 	eventChannel := make(chan *event.Message, 1)
 	return &Connection{

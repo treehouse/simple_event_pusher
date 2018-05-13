@@ -6,34 +6,33 @@ import (
 )
 
 type AddStruct struct {
-	Key string
+	Key  string
 	Conn *push.Connection
 }
 
 type SendStruct struct {
-	Key string 
+	Key string
 	Msg *event.Message
 }
 
 type ConnStore struct {
-	connList *push.ConnList
-	AddConn chan AddStruct
+	connList   *push.ConnList
+	AddConn    chan AddStruct
 	DeleteConn chan string
 	SendToPush chan SendStruct
 }
 
 func New() *ConnStore {
 	return &ConnStore{
-		connList: push.NewConnList(),
-		AddConn: make(chan AddStruct, 1),
+		connList:   push.NewConnList(),
+		AddConn:    make(chan AddStruct, 1),
 		DeleteConn: make(chan string),
 		SendToPush: make(chan SendStruct, 1),
 	}
 }
 
-
 func (cs ConnStore) Add(channel string, c *push.Connection) {
-	cs.AddConn <- AddStruct{ Key: channel, Conn: c }
+	cs.AddConn <- AddStruct{Key: channel, Conn: c}
 }
 
 func (cs ConnStore) Delete(channel string) {
@@ -41,9 +40,8 @@ func (cs ConnStore) Delete(channel string) {
 }
 
 func (cs ConnStore) Send(channel string, m *event.Message) {
-	cs.SendToPush <- SendStruct{ Key: channel, Msg: m }
+	cs.SendToPush <- SendStruct{Key: channel, Msg: m}
 }
-
 
 func (cs ConnStore) Run() {
 	for {
@@ -58,6 +56,6 @@ func (cs ConnStore) Run() {
 			key := outgoingMsg.Key
 			msg := outgoingMsg.Msg
 			cs.connList.SendToPush(key, msg)
-		} 
+		}
 	}
 }
