@@ -16,7 +16,7 @@ type SendStruct struct {
 }
 
 type ConnStore struct {
-	connList *ConnList
+	connList *push.ConnList
 	AddConn chan AddStruct
 	DeleteConn chan string
 	SendToPush chan SendStruct
@@ -24,7 +24,7 @@ type ConnStore struct {
 
 func New() *ConnStore {
 	return &ConnStore{
-		connList: newConnList(), //ConnList{},
+		connList: push.NewConnList(),
 		AddConn: make(chan AddStruct, 1),
 		DeleteConn: make(chan string),
 		SendToPush: make(chan SendStruct, 1),
@@ -40,19 +40,23 @@ func (cs ConnStore) Delete(channel string) {
 	cs.DeleteConn <- channel
 }
 
+func (cs ConnStore) Send(channel string, m *event.Message) {
+	cs.SendToPush <- SendStruct{ Key: channel, Msg: m }
+}
+
 
 func (cs ConnStore) Run() {
 	for {
 		select {
 		case incomingConn := <-cs.AddConn:
-			key := incomingConn.Key//.(string)
-			conn := incomingConn.Conn//.(*push.Connection)
+			key := incomingConn.Key
+			conn := incomingConn.Conn
 			cs.connList.Add(key, conn)
 		case key := <-cs.DeleteConn:
 			cs.connList.Delete(key)
 		case outgoingMsg := <-cs.SendToPush:
-			key := outgoingMsg.Key//.(string)
-			msg := outgoingMsg.Msg//.(*event.Message)
+			key := outgoingMsg.Key
+			msg := outgoingMsg.Msg
 			cs.connList.SendToPush(key, msg)
 		} 
 	}

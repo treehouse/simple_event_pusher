@@ -52,14 +52,11 @@ func generateMsgs(cs *mux.ConnStore) {
 		}
 		binarySwitch = !binarySwitch
 		/***************************************/
-
-		cs.SendToPush <- mux.SendStruct{
-			Key: channel, 
-			Msg: &event.Message{
-				EventStr: "message",
-				Channel:  channel,
-				DataStr:  "{\"test\":\"message\"}",
-			},
-		}
+		
+		cs.Send(channel, &event.Message{
+			EventStr: "message",
+			Channel:  channel,
+			DataStr:  "{\"test\":\"message\"}",
+		})
 	}
 }

@@ -1,26 +1,25 @@
-package push_mux
+package push
 
 import (
 	"sync"
-	push "github.com/nicolasjhampton/simple_event_pusher/internal/connection"
 	event "github.com/nicolasjhampton/simple_event_pusher/pkg/event"
 )
 
-type ConnMap map[string]*push.Connection
+type ConnMap map[string]*Connection
 
 type ConnList struct {
 	list ConnMap
 	mu sync.RWMutex
 }
 
-func newConnList() *ConnList {
+func NewConnList() *ConnList {
 	return &ConnList{
 		list: ConnMap{},
 		mu: sync.RWMutex{},
 	}
 }
 
-func (cl *ConnList) Add(sessionName string, conn *push.Connection) {
+func (cl *ConnList) Add(sessionName string, conn *Connection) {
 	cl.mu.Lock()
 	defer cl.mu.Unlock()
 	cl.list[sessionName] = conn
