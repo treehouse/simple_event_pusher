@@ -1,7 +1,7 @@
 package push
 
 import (
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	event "github.com/treehouse/simple_event_pusher/internal/event"
 	"sync"
 )
 

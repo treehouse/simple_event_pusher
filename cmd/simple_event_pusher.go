@@ -13,7 +13,7 @@ const (
 	DEFAULT_PORT                        = ":8080"
 	DEFAULT_REDIS_ADDR                  = "localhost:6379"
 	DEFAULT_REDIS_PUBSUB_CHANNEL        = "event_pusher"
-	DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN = "*" //http://localhost:8080/
+	DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN = "http://localhost:3001"
 )
 
 func main() {
@@ -27,20 +27,22 @@ func main() {
 		ReadTimeout: 15 * time.Second,
 	}
 
-	var connMux = mux.New()
 
-	// runs on a single thread and manages connection list
-	// access as many threads read/write connections via channels
-	// to this thread
+	// runs on a single thread, manages connection list
+	// data structure uses a RWMutex to provide concurrent reads 
+	// and threadsafe on writes
+	connMux := mux.New()
 	go connMux.Run()
 
 	// creates a new thread for each new session connection
 	http.HandleFunc("/channel/", handler.ServeSession(connMux, accessControlAllowOrigin))
 
 	// all redis msgs come in on a single thread
-	// redis is contained here, nowhere else
-	go cli.ListenForMsgs(connMux, redisAddr, redisPubsubChannel)
-
+	// and leave on separate goroutines
+	go cli.ListenForMsgs(
+		connMux, 
+		cli.Redis(redisAddr, redisPubsubChannel),
+	)
 
 	s.ListenAndServe()
 }

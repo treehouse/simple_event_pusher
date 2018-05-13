@@ -3,7 +3,7 @@ package push
 import (
 	"fmt"
 	es "github.com/donovanhide/eventsource"
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	event "github.com/treehouse/simple_event_pusher/internal/event"
 	"net/http"
 )
 

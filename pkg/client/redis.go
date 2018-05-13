@@ -1,28 +1,36 @@
 package client
 
 import (
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	event "github.com/treehouse/simple_event_pusher/internal/event"
 	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	"github.com/go-redis/redis"
 	"encoding/json"
 	"fmt"
 )
 
-// PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
-func ListenForMsgs(cs *mux.ConnStore, redisAddr string, redisChannel string) {
+type Incoming interface {
+	Close() error
+	ReceiveMessage() (*redis.Message, error)
+}
+
+func Redis(redisAddr string, redisChannel string) Incoming {
 	rClient := redis.NewClient(&redis.Options{
 		Addr:     redisAddr,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
+	pubsub := rClient.Subscribe(redisChannel)
+	return pubsub
+}
 
-	incomingChannel := rClient.Subscribe(redisChannel)
-	defer incomingChannel.Close()
+// PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
+func ListenForMsgs(cs *mux.ConnStore, dataSource Incoming) {
+	
+	defer dataSource.Close()
 
 	for {
-		epmsg := event.Message{}
-
-		msg, err := incomingChannel.ReceiveMessage(); 
+		msg, err := dataSource.ReceiveMessage();
+		epmsg := event.Message{} 
 		if err != nil {
 			fmt.Println(err)
 			continue

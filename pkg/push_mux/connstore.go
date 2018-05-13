@@ -2,7 +2,7 @@ package push_mux
 
 import (
 	push "github.com/treehouse/simple_event_pusher/internal/connection"
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	event "github.com/treehouse/simple_event_pusher/internal/event"
 )
 
 type AddStruct struct {
