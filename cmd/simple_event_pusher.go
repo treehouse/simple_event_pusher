@@ -2,10 +2,10 @@ package main
 
 import (
 	cli "github.com/treehouse/simple_event_pusher/pkg/client"
+	env "github.com/treehouse/simple_event_pusher/pkg/env"
 	handler "github.com/treehouse/simple_event_pusher/pkg/handler"
 	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -16,11 +16,13 @@ const (
 	DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN = "http://localhost:3001"
 )
 
+// PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
+
 func main() {
-	port := envDefault("EVENT_PUSHER_PORT", DEFAULT_PORT)
-	redisAddr := envDefault("EVENT_PUSHER_REDIS_ADDR", DEFAULT_REDIS_ADDR)
-	redisPubsubChannel := envDefault("EVENT_PUSHER_REDIS_PUBSUB_CHANNEL", DEFAULT_REDIS_PUBSUB_CHANNEL)
-	accessControlAllowOrigin := envDefault("EVENT_PUSHER_ACCESS_CONTROL_ALLOW_ORIGIN", DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN)
+	port := env.Default("EVENT_PUSHER_PORT", DEFAULT_PORT)
+	redisAddr := env.Default("EVENT_PUSHER_REDIS_ADDR", DEFAULT_REDIS_ADDR)
+	redisPubsubChannel := env.Default("EVENT_PUSHER_REDIS_PUBSUB_CHANNEL", DEFAULT_REDIS_PUBSUB_CHANNEL)
+	accessControlAllowOrigin := env.Default("EVENT_PUSHER_ACCESS_CONTROL_ALLOW_ORIGIN", DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN)
 
 	s := &http.Server{
 		Addr:        port,
@@ -44,14 +46,4 @@ func main() {
 	)
 
 	s.ListenAndServe()
-}
-
-// PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
-
-func envDefault(key, def string) string {
-	val := os.Getenv(key)
-	if len(val) == 0 {
-		return def
-	}
-	return val
 }

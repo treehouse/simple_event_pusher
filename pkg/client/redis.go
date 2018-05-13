@@ -35,6 +35,5 @@ func Redis(redisAddr string, redisChannel string) Incoming {
 		DB:       0,  // use default DB
 	})
 	pubsub := rClient.Subscribe(redisChannel)
-	return Subscription{ pubsub: pubsub }
+	return Subscription{pubsub: pubsub}
 }
-
