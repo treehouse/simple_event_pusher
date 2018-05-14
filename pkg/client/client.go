@@ -3,9 +3,8 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
-	// mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	push "github.com/treehouse/simple_event_pusher/pkg/connection"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
 )
 
 type MessageInterface interface {

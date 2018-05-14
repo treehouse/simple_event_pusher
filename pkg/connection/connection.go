@@ -45,7 +45,7 @@ func (c *Connection) ServePUSH(w http.ResponseWriter, r *http.Request) {
 	c.pushHandler.ServeHTTP(w, r)
 }
 
-// SendToPush provides a new message to the running Msgs
+// Send provides a new message to the running Msgs
 // thread to push to the browser.
 func (c *Connection) Send(msg *event.Message) {
 	c.toPushChan <- msg

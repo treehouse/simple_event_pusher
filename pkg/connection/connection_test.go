@@ -40,7 +40,7 @@ func ExampleConnection_Msgs() {
 
 	// ServePUSH acts as a blocking line here. While blocking, Msgs
 	// continues to run on it's own thread, listening for msgs to push.
-	// When the browser disconnects, ServeHTTP stops running, and the
+	// When the browser disconnects, ServePUSH stops running, and the
 	// outer function reaches it's end, triggering the deferred
 	// connection close and ending the Msgs goroutine.
 

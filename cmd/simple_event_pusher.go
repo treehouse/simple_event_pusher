@@ -2,10 +2,9 @@ package main
 
 import (
 	cli "github.com/treehouse/simple_event_pusher/pkg/client"
+	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	env "github.com/treehouse/simple_event_pusher/pkg/env"
 	handler "github.com/treehouse/simple_event_pusher/pkg/handler"
-	// mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
-	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	"net/http"
 	"time"
 )
@@ -16,8 +15,6 @@ const (
 	DEFAULT_REDIS_PUBSUB_CHANNEL        = "event_pusher"
 	DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN = "http://localhost:3001"
 )
-
-// PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
 
 func main() {
 	port := env.Default("EVENT_PUSHER_PORT", DEFAULT_PORT)
@@ -30,23 +27,20 @@ func main() {
 		ReadTimeout: 15 * time.Second,
 	}
 
-	// runs on a single thread, manages connection list
-	// data structure uses a RWMutex to provide concurrent reads
-	// and threadsafe on writes
-	// connMux := mux.New()
-	// go connMux.Run()
-
+	// Threadsafe collection of connections
 	connList := push.NewConnList()
 
 	// creates a new thread for each new session connection
 	http.HandleFunc("/channel/", handler.ServeSession(connList, accessControlAllowOrigin))
 
 	// all redis msgs come in on a single thread
-	// and leave on separate goroutines
 	go cli.ListenForMsgs(
 		connList,
 		cli.Redis(redisAddr, redisPubsubChannel),
 	)
 
+	// Listen for new connections
+	// https://golang.org/pkg/net/http/#Server.ListenAndServe
+	// https://golang.org/pkg/net/http/#Server.Serve
 	s.ListenAndServe()
 }

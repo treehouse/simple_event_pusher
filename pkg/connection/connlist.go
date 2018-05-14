@@ -11,8 +11,8 @@ type ConnMap map[string]*Connection
 
 // Essencially a light wrapper around a map of connections with
 // methods and a Read/Write Mutex to ensure threadsafe reads and
-// writes. Read operations are allowed to occur concurrently while
-// locking out writes. Write operations lock for exclusive access.
+// writes. May be able to improve performance with a RWMutex
+// that allows concurrent reads while locking writes.
 type ConnList struct {
 	list ConnMap
 	mu   sync.Mutex
@@ -42,9 +42,8 @@ func (cl *ConnList) Remove(conn *Connection) {
 	delete(cl.list, conn.Channel)
 }
 
-// Pushes a message to connected browser. Locks write operations
-// out while push occurs, but allows for concurrent pushes by
-// multiple threads. Reads channel from message to determine
+// Pushes a message to connected browser, locking out all other
+// threads while write occurs. Reads channel from message to determine
 // correct browser to send to.
 func (cl *ConnList) Send(msg *event.Message) {
 	cl.mu.Lock()
