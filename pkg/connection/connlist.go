@@ -15,14 +15,14 @@ type ConnMap map[string]*Connection
 // locking out writes. Write operations lock for exclusive access.
 type ConnList struct {
 	list ConnMap
-	mu   sync.RWMutex
+	mu   sync.Mutex
 }
 
 // Creates and initializes a new ConnList
 func NewConnList() *ConnList {
 	return &ConnList{
 		list: ConnMap{},
-		mu:   sync.RWMutex{},
+		mu:   sync.Mutex{},
 	}
 }
 
@@ -47,8 +47,8 @@ func (cl *ConnList) Remove(conn *Connection) {
 // multiple threads. Reads channel from message to determine
 // correct browser to send to.
 func (cl *ConnList) SendToPush(msg *event.Message) {
-	cl.mu.RLock()
-	defer cl.mu.RUnlock()
+	cl.mu.Lock()
+	defer cl.mu.Unlock()
 	if conn, ok := cl.list[msg.Channel]; ok {
 		conn.SendToPush(msg)
 	}
@@ -57,8 +57,8 @@ func (cl *ConnList) SendToPush(msg *event.Message) {
 // Helper method primarily for checking private state of channel
 // list during testing.
 func (cl *ConnList) Channels() []string {
-	cl.mu.RLock()
-	defer cl.mu.RUnlock()
+	cl.mu.Lock()
+	defer cl.mu.Unlock()
 	channels := []string{}
 	for channel, _ := range cl.list {
 		channels = append(channels, channel)

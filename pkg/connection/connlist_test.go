@@ -27,8 +27,11 @@ func ExampleConnList_Add() {
 	connList.Add(pConn2)
 	connList.Add(pConn3)
 
+	channels := connList.Channels()
+
+	// fmt.Println(channels)
 	fmt.Println(reflect.DeepEqual(
-		connList.Channels(),
+		channels,
 		[]string{"channel_one", "channel_two", "channel_three"},
 	))
 	// Output:
@@ -39,8 +42,11 @@ func ExampleConnList_Remove() {
 
 	connList.Remove(pConn2)
 
+	channels := connList.Channels()
+
+	// fmt.Println(channels)
 	fmt.Println(reflect.DeepEqual(
-		connList.Channels(),
+		channels,
 		[]string{"channel_one", "channel_three"},
 	))
 	// Output:
