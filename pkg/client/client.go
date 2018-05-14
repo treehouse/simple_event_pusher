@@ -3,7 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	event "github.com/treehouse/simple_event_pusher/internal/event"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 )
 
@@ -24,7 +24,7 @@ func ListenForMsgs(cs *mux.ConnStore, dataSource Incoming) {
 
 	for {
 		msg, err := dataSource.ReceiveMessage()
-		
+
 		if err != nil {
 			fmt.Println(err)
 			continue

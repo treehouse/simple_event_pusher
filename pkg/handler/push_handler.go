@@ -1,7 +1,7 @@
 package handler
 
 import (
-	push "github.com/treehouse/simple_event_pusher/internal/connection"
+	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	"net/http"
 	"regexp"
@@ -20,28 +20,21 @@ func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionChannel := getChannel(r)
 		if sessionChannel == "" {
-			return 
+			return
 		}
 
 		if cors != "" {
 			w.Header().Add("Access-Control-Allow-Origin", cors)
 		}
 
-		conn := push.NewConnection()
-		defer conn.Close()
+		pConn := push.NewConnection(sessionChannel)
+		defer pConn.Close()
 
-		cs.Add(sessionChannel, conn)
-		defer cs.Delete(sessionChannel)
+		cs.Add(pConn)
+		defer cs.Remove(pConn)
 
-		push := conn.Handler(sessionChannel)
+		go pConn.Msgs()
 
-		// receives redis msgs and pushes to browser, one thread per session
-		go conn.Msgs()
-
-		// opens event connection. blocking line
-		push.ServeHTTP(w, r)
-		// when browser disconnects, connection is closed and
-		// removed from ConnStore, and goroutine for that browser's
-		// push event msgs ends
+		pConn.ServePUSH(w, r)
 	}
 }
