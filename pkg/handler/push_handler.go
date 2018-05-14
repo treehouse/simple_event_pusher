@@ -2,7 +2,7 @@ package handler
 
 import (
 	push "github.com/treehouse/simple_event_pusher/pkg/connection"
-	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
+	// mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
 	"net/http"
 	"regexp"
 )
@@ -16,7 +16,7 @@ func getChannel(r *http.Request) string {
 	return ""
 }
 
-func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *http.Request) {
+func ServeSession(cl *push.ConnList, cors string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionChannel := getChannel(r)
 		if sessionChannel == "" {
@@ -30,8 +30,8 @@ func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *htt
 		pConn := push.NewConnection(sessionChannel)
 		defer pConn.Close()
 
-		cs.Add(pConn)
-		defer cs.Remove(pConn)
+		cl.Add(pConn)
+		defer cl.Remove(pConn)
 
 		go pConn.Msgs()
 

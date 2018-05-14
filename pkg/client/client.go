@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
-	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
+	// mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
+	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 )
 
 type MessageInterface interface {
@@ -18,7 +19,7 @@ type Incoming interface {
 }
 
 // PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
-func ListenForMsgs(cs *mux.ConnStore, dataSource Incoming) {
+func ListenForMsgs(cl *push.ConnList, dataSource Incoming) {
 
 	defer dataSource.Close()
 
@@ -37,6 +38,6 @@ func ListenForMsgs(cs *mux.ConnStore, dataSource Incoming) {
 			continue
 		}
 
-		go cs.Send(&epmsg)
+		go cl.Send(&epmsg)
 	}
 }

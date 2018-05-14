@@ -46,11 +46,11 @@ func (cl *ConnList) Remove(conn *Connection) {
 // out while push occurs, but allows for concurrent pushes by
 // multiple threads. Reads channel from message to determine
 // correct browser to send to.
-func (cl *ConnList) SendToPush(msg *event.Message) {
+func (cl *ConnList) Send(msg *event.Message) {
 	cl.mu.Lock()
 	defer cl.mu.Unlock()
 	if conn, ok := cl.list[msg.Channel]; ok {
-		conn.SendToPush(msg)
+		conn.Send(msg)
 	}
 }
 

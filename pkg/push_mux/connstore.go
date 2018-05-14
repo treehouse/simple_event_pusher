@@ -1,3 +1,4 @@
+// Deprecated
 package push_mux
 
 import (
@@ -37,6 +38,10 @@ func (cs ConnStore) Remove(c *push.Connection) {
 
 func (cs ConnStore) Send(msg *event.Message) {
 	cs.SendToPush <- msg
+}
+
+func (cs ConnStore) Queue() {
+	cs.toConnStore <- 
 }
 
 func (cs ConnStore) Channels() []string {

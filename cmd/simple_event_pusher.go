@@ -4,7 +4,8 @@ import (
 	cli "github.com/treehouse/simple_event_pusher/pkg/client"
 	env "github.com/treehouse/simple_event_pusher/pkg/env"
 	handler "github.com/treehouse/simple_event_pusher/pkg/handler"
-	mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
+	// mux "github.com/treehouse/simple_event_pusher/pkg/push_mux"
+	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	"net/http"
 	"time"
 )
@@ -32,16 +33,19 @@ func main() {
 	// runs on a single thread, manages connection list
 	// data structure uses a RWMutex to provide concurrent reads
 	// and threadsafe on writes
-	connMux := mux.New()
-	go connMux.Run()
+	// connMux := mux.New()
+	// go connMux.Run()
+
+	connList := push.NewConnList()
 
 	// creates a new thread for each new session connection
-	http.HandleFunc("/channel/", handler.ServeSession(connMux, accessControlAllowOrigin))
+	http.HandleFunc("/channel/", handler.ServeSession(/*connMux,*/connList, accessControlAllowOrigin))
 
 	// all redis msgs come in on a single thread
 	// and leave on separate goroutines
 	go cli.ListenForMsgs(
-		connMux,
+		connList,
+		/*connMux,*/
 		cli.Redis(redisAddr, redisPubsubChannel),
 	)
 
