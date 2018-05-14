@@ -39,13 +39,12 @@ func main() {
 	connList := push.NewConnList()
 
 	// creates a new thread for each new session connection
-	http.HandleFunc("/channel/", handler.ServeSession(/*connMux,*/connList, accessControlAllowOrigin))
+	http.HandleFunc("/channel/", handler.ServeSession(connList, accessControlAllowOrigin))
 
 	// all redis msgs come in on a single thread
 	// and leave on separate goroutines
 	go cli.ListenForMsgs(
 		connList,
-		/*connMux,*/
 		cli.Redis(redisAddr, redisPubsubChannel),
 	)
 

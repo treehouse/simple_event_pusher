@@ -22,9 +22,9 @@ func ExampleNewConnection() {
 	// Channel: myChannel
 }
 
-func ExampleConnection_SendToPush() {
+func ExampleConnection_Send() {
 
-	go conn.SendToPush(&event.Message{
+	go conn.Send(&event.Message{
 		EventStr: "events_can_be_assigned_to_different_handlers_on_client",
 		Channel:  "one_channel_per_broswer_connection",
 		DataStr:  "{ \"a\": \"data\", \"pay\": \"load\" }",

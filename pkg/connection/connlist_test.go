@@ -53,9 +53,9 @@ func ExampleConnList_Remove() {
 	// true
 }
 
-func ExampleConnList_SendToPush() {
+func ExampleConnList_Send() {
 
-	connList.SendToPush(&event.Message{
+	connList.Send(&event.Message{
 		EventStr: "",
 		Channel:  "channel_three",
 		DataStr:  "{ \"a\": \"data\", \"pay\": \"load\" }",
