@@ -2,6 +2,7 @@ package handler
 
 import (
 	push "github.com/treehouse/simple_event_pusher/pkg/connection"
+	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 	"net/http"
 	"regexp"
 )
@@ -27,7 +28,7 @@ func getChannel(r *http.Request) string {
 // to listen for messages for that channel from the redis client,
 // and opens the keep-alive event source connection to the browser
 // with ServePUSH.
-func ServeSession(cl *push.ConnList, cors string) func(http.ResponseWriter, *http.Request) {
+func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionChannel := getChannel(r)
 		if sessionChannel == "" {
@@ -38,11 +39,11 @@ func ServeSession(cl *push.ConnList, cors string) func(http.ResponseWriter, *htt
 			w.Header().Add("Access-Control-Allow-Origin", cors)
 		}
 
-		pConn := push.NewConnection(sessionChannel)
+		pConn := push.NewDonovanConn(sessionChannel)
 		defer pConn.Close()
 
-		cl.Add(pConn)
-		defer cl.Remove(pConn)
+		cs.Add(pConn)
+		defer cs.Remove(pConn)
 
 		go pConn.Msgs()
 

@@ -2,12 +2,12 @@ package handler_test
 
 import (
 	"fmt"
-	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	handler "github.com/treehouse/simple_event_pusher/pkg/handler"
+	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 	"reflect"
 )
 
-var connList *push.ConnList = push.NewConnList()
+var connList *mux.ConnStore = mux.New()
 
 func ExampleServeSession() {
 

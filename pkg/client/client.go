@@ -1,24 +1,19 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
-	push "github.com/treehouse/simple_event_pusher/pkg/connection"
+	// push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 )
-
-type MessageInterface interface {
-	GetChannel() string
-	GetPayload() string
-}
 
 type Incoming interface {
 	Close() error
-	ReceiveMessage() (MessageInterface, error)
+	ReceiveMessage() (event.Message, error)
 }
 
 // PUBLISH event_pusher '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
-func ListenForMsgs(cl *push.ConnList, dataSource Incoming) {
+func ListenForMsgs(mux *mux.ConnStore, dataSource Incoming) {
 
 	defer dataSource.Close()
 
@@ -29,14 +24,17 @@ func ListenForMsgs(cl *push.ConnList, dataSource Incoming) {
 			fmt.Println(err)
 			continue
 		}
-		fmt.Printf("got payload from redis pubsub %+v\n", msg.GetPayload())
+		fmt.Printf("got payload from redis pubsub %+v\n", msg.Data())
 
-		epmsg := event.Message{}
-		if err := json.Unmarshal([]byte(msg.GetPayload()), &epmsg); err != nil {
-			fmt.Println(err)
-			continue
-		}
+		/// channel := msg.GetChannel() // [len(s.redisPubsubPrefix)+1:] myers has a two-part channel name here with a slice
+		///channel := msg.GetChannel()[len("event_pusher") + 1:]
+		// evt := event.Event{
+		// 	CHANNEL: msg.Channel(),
+		// 	Event: msg.GetEvent(),
+		// 	Data: msg.GetData(),
+		// 	Id: msg.GetId(),
+		// }
 
-		go cl.Send(&epmsg)
+		go mux.Send(msg)
 	}
 }

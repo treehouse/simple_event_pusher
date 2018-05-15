@@ -2,9 +2,9 @@ package main
 
 import (
 	cli "github.com/treehouse/simple_event_pusher/pkg/client"
-	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	env "github.com/treehouse/simple_event_pusher/pkg/env"
 	handler "github.com/treehouse/simple_event_pusher/pkg/handler"
+	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 	"net/http"
 	"time"
 )
@@ -28,14 +28,14 @@ func main() {
 	}
 
 	// Threadsafe collection of connections
-	connList := push.NewConnList()
+	connStore := mux.New()
 
 	// creates a new thread for each new session connection
-	http.HandleFunc("/channel/", handler.ServeSession(connList, accessControlAllowOrigin))
+	http.HandleFunc("/channel/", handler.ServeSession(connStore, accessControlAllowOrigin))
 
 	// all redis msgs come in on a single thread
 	go cli.ListenForMsgs(
-		connList,
+		connStore,
 		cli.Redis(redisAddr, redisPubsubChannel),
 	)
 
