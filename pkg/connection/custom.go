@@ -92,6 +92,7 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 		for {
 			select {
 			case <-notifier.CloseNotify():
+				fmt.Println("hello")
 				// accomodate for multiple users on a channel here potentially
 				// not currently a concern
 				c.Close()

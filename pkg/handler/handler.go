@@ -5,6 +5,7 @@ import (
 	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 	"net/http"
 	"regexp"
+	"fmt"
 )
 
 var chanRegex = regexp.MustCompile(`^/channel/([^/]+)$`)
@@ -40,7 +41,7 @@ func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *htt
 		// }
 
 		pConn := push.NewCustomConn(sessionChannel, cors)
-		defer pConn.Close()
+		//defer pConn.Close()
 
 		cs.Add(pConn)
 		defer cs.Remove(pConn)
@@ -48,5 +49,6 @@ func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *htt
 		go pConn.Msgs()
 
 		pConn.ServePUSH(w, r)
+		fmt.Println("passed where I should")
 	}
 }
