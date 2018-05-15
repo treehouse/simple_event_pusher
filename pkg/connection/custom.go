@@ -20,20 +20,29 @@ type CustomConnection struct {
 	channel     string
 	handler http.HandlerFunc
 	toPushChan  chan event.Message
+	Closed bool
 	// eventPusher *es.Server
 }
 
 func NewConnection(sessionChannel string) Connection {
-	// pusher := es.NewServer()
-	// handler := pusher.Handler(sessionChannel)
-	handler := NewHandler(/* cors string */)
-	eventChannel := make(chan event.Message)
-	return &CustomConnection{
+	newConn := &CustomConnection{
 		channel:     sessionChannel,
-		handler: handler,
-		toPushChan:  eventChannel,
+		Closed: false,
+		// handler: handler,
+		// toPushChan:  eventChannel,
 		// eventPusher: pusher,
 	}
+	// pusher := es.NewServer()
+	// handler := pusher.Handler(sessionChannel)
+	newConn.handler = newConn.NewHandler(/* cors string */)
+	newConn.toPushChan = make(chan event.Message)
+	return newConn
+	// return &CustomConnection{
+	// 	channel:     sessionChannel,
+	// 	handler: handler,
+	// 	toPushChan:  eventChannel,
+	// 	// eventPusher: pusher,
+	// }
 }
 
 func (c *CustomConnection) NewHandler() http.HandlerFunc {
@@ -56,7 +65,7 @@ func (c *CustomConnection) NewHandler() http.HandlerFunc {
 
 		// If the Handler is still active even though the connection is closed, stop here.
 		// Otherwise the Handler may block indefinitely.
-		if c.toPushChan == nil () {
+		if c.Closed == true {
 			return
 		}
 
@@ -132,16 +141,16 @@ func (c *CustomConnection) Send(msg event.Message) {
 // for any messages to push to the browser. Run with a deferred
 // Close function to clean up disconnected browser connections.
 func (c *CustomConnection) Msgs() {
-	defer c.eventPusher.Close()
-	for {
-		nextMsg, ok := <-c.toPushChan
-		if !ok {
-			return
-		}
-		fmt.Println("pushing to browser:", nextMsg)
+	// defer c.Close()
+	// for {
+	// 	nextMsg, ok := <-c.toPushChan
+	// 	if !ok {
+	// 		return
+	// 	}
+	// 	fmt.Println("pushing to browser:", nextMsg)
 
-		c.handler.Publish([]string{nextMsg.GetChannel()}, nextMsg)
-	}
+	// 	c.handler.Publish([]string{nextMsg.GetChannel()}, nextMsg)
+	// }
 }
 
 // Close is a wrapper around the implementation of push. Responsible
@@ -151,7 +160,7 @@ func (c *CustomConnection) Msgs() {
 // value and know the connection is no longer open to handle.
 func (c *CustomConnection) Close() {
 	close(c.toPushChan)
-	c.toPushChan = nil
+	c.Closed = true
 }
 
 // Returns the channel this connection is assigned to in the connList

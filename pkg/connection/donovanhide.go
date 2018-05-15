@@ -65,7 +65,7 @@ func (c *DonovanhideConnection) Msgs() {
 		}
 		fmt.Println("pushing to browser:", nextMsg)
 
-		c.handler.Publish([]string{nextMsg.GetChannel()}, nextMsg)
+		c.eventPusher.Publish([]string{nextMsg.GetChannel()}, nextMsg)
 	}
 }
 
