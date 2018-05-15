@@ -7,7 +7,6 @@ import (
 	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 	"net/http"
 	"time"
-	"fmt"
 )
 
 const (
