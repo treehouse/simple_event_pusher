@@ -21,28 +21,16 @@ type CustomConnection struct {
 	handler http.HandlerFunc
 	toPushChan  chan event.Message
 	Closed bool
-	// eventPusher *es.Server
 }
 
 func NewCustomConn(sessionChannel, cors string) Connection {
 	newConn := &CustomConnection{
 		channel:     sessionChannel,
 		Closed: false,
-		// handler: handler,
-		// toPushChan:  eventChannel,
-		// eventPusher: pusher,
 	}
-	// pusher := es.NewServer()
-	// handler := pusher.Handler(sessionChannel)
 	newConn.handler = newConn.NewHandler(cors)
 	newConn.toPushChan = make(chan event.Message)
 	return newConn
-	// return &CustomConnection{
-	// 	channel:     sessionChannel,
-	// 	handler: handler,
-	// 	toPushChan:  eventChannel,
-	// 	// eventPusher: pusher,
-	// }
 }
 
 func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
@@ -69,15 +57,6 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 			return
 		}
 
-		// sub := &subscription{
-		// 	channel:     channel,
-		// 	lastEventId: req.Header.Get("Last-Event-ID"),
-		// 	out:         make(chan Event, srv.BufferSize),
-		// }
-
-
-		// srv.subs <- sub
-
 		flusher := w.(http.Flusher)
 		notifier := w.(http.CloseNotifier)
 
@@ -92,7 +71,8 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 		for {
 			select {
 			case <-notifier.CloseNotify():
-				fmt.Println("hello")
+				// convert to logger, maybe still use fmt for doctests
+				fmt.Println("client disconnected from channel: ", c.Channel())
 				// accomodate for multiple users on a channel here potentially
 				// not currently a concern
 				c.Close()
@@ -127,7 +107,6 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 // ServePUSH will block execution in the thread its in until browser
 // disconnects.
 func (c *CustomConnection) ServePUSH(w http.ResponseWriter, r *http.Request) {
-	
 	c.handler.ServeHTTP(w, r)
 }
 
