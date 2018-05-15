@@ -39,6 +39,6 @@ func Redis(redisAddr string, redisChannel string) Incoming {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
-	pubsub := rClient.PSubscribe("event_pusher:*")
+	pubsub := rClient.PSubscribe(redisChannel + ":*")
 	return Subscription{pubsub: pubsub}
 }
