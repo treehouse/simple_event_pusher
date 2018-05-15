@@ -18,7 +18,7 @@ import (
 // https://caniuse.com/#search=websockets
 type DonovanhideConnection struct {
 	channel     string
-	pushHandler http.HandlerFunc
+	handler http.HandlerFunc
 	eventPusher *es.Server
 	toPushChan  chan event.Message
 }
@@ -29,7 +29,7 @@ func NewDonovanConn(sessionChannel string) Connection {
 	eventChannel := make(chan event.Message)
 	return &DonovanhideConnection{
 		channel:     sessionChannel,
-		pushHandler: handler,
+		handler: handler,
 		eventPusher: pusher,
 		toPushChan:  eventChannel,
 	}
@@ -40,7 +40,8 @@ func NewDonovanConn(sessionChannel string) Connection {
 // ServePUSH will block execution in the thread its in until browser
 // disconnects.
 func (c *DonovanhideConnection) ServePUSH(w http.ResponseWriter, r *http.Request) {
-	c.pushHandler.ServeHTTP(w, r)
+	
+	c.handler.ServeHTTP(w, r)
 }
 
 // Send provides a new message to the running Msgs
@@ -54,7 +55,9 @@ func (c *DonovanhideConnection) Send(msg event.Message) {
 // for any messages to push to the browser. Run with a deferred
 // Close function to clean up disconnected browser connections.
 func (c *DonovanhideConnection) Msgs() {
-	defer c.eventPusher.Close()
+	// notice that this closes the multiplex server running for one our
+	// one connection, not just the connection
+	defer c.eventPusher.Close() 
 	for {
 		nextMsg, ok := <-c.toPushChan
 		if !ok {
@@ -62,7 +65,7 @@ func (c *DonovanhideConnection) Msgs() {
 		}
 		fmt.Println("pushing to browser:", nextMsg)
 
-		c.eventPusher.Publish([]string{nextMsg.GetChannel()}, nextMsg)
+		c.handler.Publish([]string{nextMsg.GetChannel()}, nextMsg)
 	}
 }
 

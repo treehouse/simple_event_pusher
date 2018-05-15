@@ -7,14 +7,6 @@ import (
 	"net/http"
 )
 
-// type Connection interface {
-// 	ServePUSH(http.ResponseWriter, *http.Request)
-// 	Send(*event.Message)
-// 	Channel() string
-// 	Close()
-// 	Msgs()
-// }
-
 // Manages the one-way push connection to a single browser. Enevlops
 // and isolates push method, currently using donovanhide/eventsource
 // library under the hood: https://godoc.org/github.com/donovanhide/eventsource
@@ -31,16 +23,16 @@ import (
 // TODO: Decouple any underlying implementation with an interface.
 type AntageConnection struct {
 	channel     string
-	eventPusher es.EventSource
+	handler es.EventSource
 	toPushChan  chan event.Message
 }
 
 func NewAntageConn(sessionChannel string) Connection {
-	pusher := es.New(nil, nil)
+	handler := es.New(nil, nil)
 	eventChannel := make(chan event.Message, 1)
 	return &AntageConnection{
 		channel:     sessionChannel,
-		eventPusher: pusher,
+		handler: handler,
 		toPushChan:  eventChannel,
 	}
 }
@@ -60,7 +52,7 @@ func (c *AntageConnection) Msgs() {
 		}
 		fmt.Println("pushing to browser:", nextMsg)
 		// "data-payload"
-		c.eventPusher.SendEventMessage(nextMsg.Data(), nextMsg.Event(), nextMsg.Id())
+		c.handler.SendEventMessage(nextMsg.Data(), nextMsg.Event(), nextMsg.Id())
 	}
 }
 
@@ -69,7 +61,7 @@ func (c *AntageConnection) Msgs() {
 // ServePUSH will block execution in the thread its in until browser
 // disconnects.
 func (c *AntageConnection) ServePUSH(w http.ResponseWriter, r *http.Request) {
-	c.eventPusher.ServeHTTP(w, r)
+	c.handler.ServeHTTP(w, r)
 }
 
 // Close is a wrapper around the implementation of push. Responsible
