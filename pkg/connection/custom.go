@@ -24,7 +24,7 @@ type CustomConnection struct {
 	// eventPusher *es.Server
 }
 
-func NewCustomConn(sessionChannel string) Connection {
+func NewCustomConn(sessionChannel, cors string) Connection {
 	newConn := &CustomConnection{
 		channel:     sessionChannel,
 		Closed: false,
@@ -34,7 +34,7 @@ func NewCustomConn(sessionChannel string) Connection {
 	}
 	// pusher := es.NewServer()
 	// handler := pusher.Handler(sessionChannel)
-	newConn.handler = newConn.NewHandler(/* cors string */)
+	newConn.handler = newConn.NewHandler(cors)
 	newConn.toPushChan = make(chan event.Message)
 	return newConn
 	// return &CustomConnection{
@@ -45,7 +45,7 @@ func NewCustomConn(sessionChannel string) Connection {
 	// }
 }
 
-func (c *CustomConnection) NewHandler() http.HandlerFunc {
+func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		h := w.Header()
 		h.Set("Content-Type", "text/event-stream; charset=utf-8")
@@ -53,7 +53,7 @@ func (c *CustomConnection) NewHandler() http.HandlerFunc {
 		h.Set("Connection", "keep-alive")
 
 		// Incorporate with the Access-Control-Allow-Origin env variable
-		h.Set("Access-Control-Allow-Origin", "*")
+		h.Set("Access-Control-Allow-Origin", cors)
 
 		// holding off on gzip for now
 		// useGzip := srv.Gzip && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip")

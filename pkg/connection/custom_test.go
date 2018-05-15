@@ -10,7 +10,7 @@ import (
 
 func ExampleNewCustomConn() {
 
-	conn = push.NewCustomConn("myChannel")
+	conn = push.NewCustomConn("myChannel", "*")
 
 	fmt.Println("Returns:", reflect.TypeOf(conn))
 	fmt.Println("Public properties:")

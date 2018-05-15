@@ -35,11 +35,11 @@ func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *htt
 			return
 		}
 
-		if cors != "" {
-			w.Header().Add("Access-Control-Allow-Origin", cors)
-		}
+		// if cors != "" {
+		// 	w.Header().Add("Access-Control-Allow-Origin", cors)
+		// }
 
-		pConn := push.NewAntageConn(sessionChannel)
+		pConn := push.NewCustomConn(sessionChannel, cors)
 		defer pConn.Close()
 
 		cs.Add(pConn)
