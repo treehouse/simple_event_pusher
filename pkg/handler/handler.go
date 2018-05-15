@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-var chanRegex = regexp.MustCompile(`^/channel/([^/]+)$`)
+var chanRegex = regexp.MustCompile(`^/v1/channels/([^/]+)$`)
 
 // Private method that reads the channel from the url. Used by
 // ServeSession.

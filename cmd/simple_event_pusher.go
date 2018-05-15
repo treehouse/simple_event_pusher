@@ -7,19 +7,20 @@ import (
 	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 	"net/http"
 	"time"
+	"fmt"
 )
 
 const (
 	DEFAULT_PORT                        = ":8080"
 	DEFAULT_REDIS_ADDR                  = "localhost:6379"
-	DEFAULT_REDIS_PUBSUB_CHANNEL        = "event_pusher"
+	DEFAULT_REDIS_PUBSUB_CHANNEL_PREFIX        = "event_pusher"
 	DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN = "http://localhost:3001"
 )
 
 func main() {
 	port := env.Default("EVENT_PUSHER_PORT", DEFAULT_PORT)
 	redisAddr := env.Default("EVENT_PUSHER_REDIS_ADDR", DEFAULT_REDIS_ADDR)
-	redisPubsubPrefix := envDefault("DEFAULT_REDIS_PUBSUB_CHANNEL_PREFIX", DEFAULT_REDIS_PUBSUB_CHANNEL_PREFIX)
+	redisPubsubPrefix := env.Default("DEFAULT_REDIS_PUBSUB_CHANNEL_PREFIX", DEFAULT_REDIS_PUBSUB_CHANNEL_PREFIX)
 	// redisPubsubChannel := env.Default("EVENT_PUSHER_REDIS_PUBSUB_CHANNEL", DEFAULT_REDIS_PUBSUB_CHANNEL)
 	accessControlAllowOrigin := env.Default("EVENT_PUSHER_ACCESS_CONTROL_ALLOW_ORIGIN", DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN)
 
@@ -63,6 +64,7 @@ func handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 
 	// w.WriteHeader(200)
 	// w.Header().Add("Content-Type", "text/plain")
+	fmt.Println("hi there")
 	w.Write([]byte("OK"))
 }
 
