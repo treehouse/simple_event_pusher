@@ -39,7 +39,7 @@ func ServeSession(cs *mux.ConnStore, cors string) func(http.ResponseWriter, *htt
 			w.Header().Add("Access-Control-Allow-Origin", cors)
 		}
 
-		pConn := push.NewDonovanConn(sessionChannel)
+		pConn := push.NewAntageConn(sessionChannel)
 		defer pConn.Close()
 
 		cs.Add(pConn)

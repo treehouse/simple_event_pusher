@@ -4,7 +4,7 @@ import (
 	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"sync"
-	//"fmt"
+	"fmt"
 )
 
 // Base data structure storing connections. Wrapped with ConnList
@@ -50,6 +50,7 @@ func (cs *ConnStore) Remove(conn push.Connection) {
 func (cs *ConnStore) Send(msg event.Message) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
+	fmt.Println(msg)
 	if conn, ok := cs.list[msg.GetChannel()]; ok {
 		conn.Send(msg)
 	}

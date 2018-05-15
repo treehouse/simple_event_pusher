@@ -49,9 +49,10 @@ func NewAntageConn(sessionChannel string) Connection {
 // messages to push to the browser. Run with a deferred Close function
 // to clean up disconnected browser connections.
 func (c *AntageConnection) Msgs() {
-	defer c.eventPusher.Close()
+	// defer c.eventPusher.Close()
 	for {
 		nextMsg, ok := <-c.toPushChan
+		fmt.Println(ok) // <- this channel is closing at start for some reason
 		if !ok {
 			// when the channel is closed, for loop is broken, eventPusher
 			// is closed, and goroutine ends.
