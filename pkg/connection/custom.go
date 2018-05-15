@@ -24,7 +24,7 @@ type CustomConnection struct {
 	// eventPusher *es.Server
 }
 
-func NewConnection(sessionChannel string) Connection {
+func NewCustomConn(sessionChannel string) Connection {
 	newConn := &CustomConnection{
 		channel:     sessionChannel,
 		Closed: false,
