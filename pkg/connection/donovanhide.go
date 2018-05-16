@@ -1,17 +1,19 @@
 package push
 
 import (
-	"fmt"
 	es "github.com/donovanhide/eventsource"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"net/http"
+	"fmt"
 )
 
 // Manages the one-way push connection to a single browser. Enevlops
 // and isolates push method, currently using donovanhide/eventsource
-// library under the hood: https://godoc.org/github.com/donovanhide/eventsource
+// library under the hood, which runs perfectly but spawns a multiplex
+// push server for each single user channel that we can't monitor or log: 
+// https://godoc.org/github.com/donovanhide/eventsource
 //
-// TODO: Consider switching to a push method with ie/edge support:
+// TODO: Consider adding a push method with ie/edge support:
 //
 // https://caniuse.com/#search=eventsource
 //
@@ -19,8 +21,9 @@ import (
 type DonovanhideConnection struct {
 	channel     string
 	handler http.HandlerFunc
-	eventPusher *es.Server
 	toPushChan  chan event.Message
+	// Closed bool
+	eventPusher *es.Server
 }
 
 func NewDonovanConn(sessionChannel string) Connection {
@@ -51,9 +54,24 @@ func (c *DonovanhideConnection) Send(msg event.Message) {
 	c.toPushChan <- msg
 }
 
+// Returns the channel this connection is assigned to in the connList
+func (c *DonovanhideConnection) Channel() string {
+	return c.channel
+}
+
+// Responsible for cleaning up the connection after disconnect. Should 
+// be called with defer when Msgs is used to clean up disconnectioned 
+// broswer connections.
+// TODO: Improve to match CustomConnection as closely as possible
+func (c *DonovanhideConnection) Close() {
+	close(c.toPushChan)
+}
+
+
 // Msgs is meant to be ran on it's own goroutine and listen
 // for any messages to push to the browser. Run with a deferred
 // Close function to clean up disconnected browser connections.
+// TODO: Check to see if this method is nessasary.
 func (c *DonovanhideConnection) Msgs() {
 	// notice that this closes the multiplex server running for one our
 	// one connection, not just the connection
@@ -67,17 +85,4 @@ func (c *DonovanhideConnection) Msgs() {
 
 		c.eventPusher.Publish([]string{nextMsg.GetChannel()}, nextMsg)
 	}
-}
-
-// Close is a wrapper around the implementation of push. Responsible
-// for cleaning up the connection after disconnect. Should be called
-// with defer when Msgs is used to clean up disconnectioned broswer
-// connections.
-func (c *DonovanhideConnection) Close() {
-	close(c.toPushChan)
-}
-
-// Returns the channel this connection is assigned to in the connList
-func (c *DonovanhideConnection) Channel() string {
-	return c.channel
 }

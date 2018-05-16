@@ -1,17 +1,18 @@
 package push
 
 import (
-	"fmt"
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	es "github.com/donovanhide/eventsource"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"net/http"
+	"fmt"
 )
 
 // Manages the one-way push connection to a single browser. Enevlops
-// and isolates push method, currently using donovanhide/eventsource
-// library under the hood: https://godoc.org/github.com/donovanhide/eventsource
+// and isolates push method, currently using minimal sections of the
+// donovanhide/eventsource library for encoding event bodies under 
+// the hood: https://godoc.org/github.com/donovanhide/eventsource
 //
-// TODO: Consider switching to a push method with ie/edge support:
+// TODO: Consider adding a push method with ie/edge support:
 //
 // https://caniuse.com/#search=eventsource
 //
@@ -39,8 +40,6 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 		h.Set("Content-Type", "text/event-stream; charset=utf-8")
 		h.Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		h.Set("Connection", "keep-alive")
-
-		// Incorporate with the Access-Control-Allow-Origin env variable
 		h.Set("Access-Control-Allow-Origin", cors)
 
 		// holding off on gzip for now
@@ -51,8 +50,8 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 
-		// If the Handler is still active even though the connection is closed, stop here.
-		// Otherwise the Handler may block indefinitely.
+		// If the Handler is still active even though the connection is 
+		// closed, stop here. Otherwise the Handler may block indefinitely.
 		if c.Closed == true {
 			return
 		}
@@ -67,26 +66,24 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 		useGzip := false
 		enc := es.NewEncoder(w, useGzip)
 
-
 		for {
 			select {
 			case <-notifier.CloseNotify():
-				// convert to logger, maybe still use fmt for doctests
+				// Convert to logger, maybe still use fmt for doctests
 				fmt.Println("client disconnected from channel: ", c.Channel())
-				// accomodate for multiple users on a channel here potentially
-				// not currently a concern
+				// Accomodate for multiple users on a channel here potentially.
+				// Not currently a concern.
 				c.Close()
 				return
 			case ev, ok := <-c.toPushChan:
 				if !ok {
+					// Might need a c.Close call here. Investigating.
 					return
 				}
 				if err := enc.Encode(ev); err != nil {
-					// accomodate for multiple users on a channel here potentially
-					// not currently a concern
+					// Accomodate for multiple users on a channel here potentially.
+					// Not currently a concern.
 					c.Close()
-					// srv.unregister <- sub
-
 					fmt.Println(err)
 					// TODO: put logger back on connection struct
 					// if srv.Logger != nil {
@@ -94,8 +91,8 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 					// }
 					return
 				}
-				// Flusher flushes the encoder's (enc) buffer to the client
-				// it's a http library interface
+				// Flusher flushes the encoder's (enc) buffer to the client.
+				// It's an http library interface.
 				flusher.Flush()
 			}
 		}
@@ -110,40 +107,32 @@ func (c *CustomConnection) ServePUSH(w http.ResponseWriter, r *http.Request) {
 	c.handler.ServeHTTP(w, r)
 }
 
-// Send provides a new message to the running Msgs
-// thread to push to the browser.
+// Send provides a new message to the for loop running in our custom
+// http.HandlerFunc (see NewHandler).
 func (c *CustomConnection) Send(msg event.Message) {
 	fmt.Println(msg)
 	c.toPushChan <- msg
 }
 
-// Msgs is meant to be ran on it's own goroutine and listen
-// for any messages to push to the browser. Run with a deferred
-// Close function to clean up disconnected browser connections.
-func (c *CustomConnection) Msgs() {
-	// defer c.Close()
-	// for {
-	// 	nextMsg, ok := <-c.toPushChan
-	// 	if !ok {
-	// 		return
-	// 	}
-	// 	fmt.Println("pushing to browser:", nextMsg)
-
-	// 	c.handler.Publish([]string{nextMsg.GetChannel()}, nextMsg)
-	// }
+// Returns the channel this connection is assigned to in the connList
+func (c *CustomConnection) Channel() string {
+	return c.channel
 }
 
-// Close is a wrapper around the implementation of push. Responsible
-// for cleaning up the connection after disconnect. Should be called
-// with defer when Msgs is used to clean up disconnectioned broswer
-// connections. Setting toPushChan to nil so handler can read nil
-// value and know the connection is no longer open to handle.
+// Responsible for cleaning up the connection after disconnect. 
+// CustomConnection calls Close automatically when a browser 
+// disconnects to clean up any resources. By setting Closed to 
+// true, we avoid other browsers arriving at this route while it's
+// closing with a check in our HandlerFunc.
 func (c *CustomConnection) Close() {
 	close(c.toPushChan)
 	c.Closed = true
 }
 
-// Returns the channel this connection is assigned to in the connList
-func (c *CustomConnection) Channel() string {
-	return c.channel
+// So far, msgs is not needed by CustomConnection, but is required
+// by the Connection interface.
+// TODO: Consider factoring out the for loop in http.HandlerFunc 
+// to use it for easier testing.
+func (c *CustomConnection) Msgs() {
+	
 }

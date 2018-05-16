@@ -11,7 +11,7 @@ import (
 // to ensure threadsafe reads/writes.
 type ConnMap map[string]push.Connection
 
-// Essencially a light wrapper around a map of connections with
+// Essentially a light wrapper around a map of connections with
 // methods and a Read/Write Mutex to ensure threadsafe reads and
 // writes. May be able to improve performance with a RWMutex
 // that allows concurrent reads while locking writes.

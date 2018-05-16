@@ -1,10 +1,9 @@
 package push_test
 
 import (
-	"fmt"
 	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
-	// cli "github.com/treehouse/simple_event_pusher/pkg/client"
+	"fmt"
 	"reflect"
 )
 
@@ -23,12 +22,7 @@ func ExampleNewAntageConn() {
 	// Channel: myChannel
 }
 
-func ExampleConnection_Send() {
-
-	// msg := cli.NewRedisMsg(
-	// 	"one_channel_per_broswer_connection",
-	// 	"{ \"a\": \"data\", \"pay\": \"load\" }",
-	// )
+func ExampleAntageConnection_Send() {
 
 	evt := event.Event{
 		CHANNEL: "myChannel",
@@ -41,7 +35,7 @@ func ExampleConnection_Send() {
 
 }
 
-func ExampleConnection_Msgs() {
+func ExampleAntageConnection_Msgs() {
 
 	// closes push connection once outside function finishes.
 	// defer conn.Close()

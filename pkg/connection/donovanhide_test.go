@@ -1,10 +1,9 @@
 package push_test
 
 import (
-	"fmt"
-	// cli "github.com/treehouse/simple_event_pusher/pkg/client"
 	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	"fmt"
 	"reflect"
 )
 
@@ -22,11 +21,6 @@ func ExampleNewDonovanConn() {
 }
 
 func ExampleDonovanhideConnection_Send() {
-
-	// msg := cli.NewRedisMsg(
-	// 	"one_channel_per_broswer_connection",
-	// 	"{ \"a\": \"data\", \"pay\": \"load\" }",
-	// )
 
 	evt := event.Event{
 		CHANNEL: "myChannel",

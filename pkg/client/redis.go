@@ -1,10 +1,14 @@
 package client
 
 import (
-	"github.com/go-redis/redis"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	"github.com/go-redis/redis"
 )
 
+// Stock redis events you can use in redis-cli:
+// PUBLISH REDIS_PUBSUB_CHANNEL_PREFIX:channel-name '{ "event": "", "channel": "channel-name", "data": [{ "this": "is" }, "data"] }'
+// PUBLISH event_pusher:hello-world '{ "event": "", "channel": "hello-world", "data": "this is data"}'
+// PUBLISH event_pusher:hello-multiplex '{ "event": "", "channel": "hello-multiplex", "data": "this is data"}'
 type RedisMessage redis.Message
 
 func NewRedisMsg(channel, data string) event.Message {

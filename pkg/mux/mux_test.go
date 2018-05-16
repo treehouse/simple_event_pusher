@@ -1,13 +1,12 @@
 package mux_test
 
 import (
-	"fmt"
-	"sort"
-	// cli "github.com/treehouse/simple_event_pusher/pkg/client"
-	push "github.com/treehouse/simple_event_pusher/pkg/connection"
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	push "github.com/treehouse/simple_event_pusher/pkg/connection"
+	"fmt"
 	"reflect"
+	"sort"
 )
 
 var pmux *mux.ConnStore
@@ -60,11 +59,6 @@ func ExampleConnStore_Send() {
 		DATA:    "{ \"a\": \"data\", \"pay\": \"load\" }",
 		ID:      "",
 	}
-
-	// msg := cli.NewRedisMsg(
-	// 	"one_channel_per_broswer_connection",
-	// 	"{ \"a\": \"data\", \"pay\": \"load\" }",
-	// )
 
 	pmux.Send(evt)
 
