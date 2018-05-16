@@ -2,6 +2,7 @@ package push
 
 import (
 	"fmt"
+	log "github.com/treehouse/simple_event_pusher/pkg/logger"
 	es "github.com/donovanhide/eventsource"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"net/http"
@@ -22,6 +23,7 @@ type CustomConnection struct {
 	handler    http.HandlerFunc
 	toPushChan chan event.Message
 	Closed     bool
+	log     	 *log.PushLog
 }
 
 func NewCustomConn(sessionChannel, cors string) Connection {
@@ -31,6 +33,7 @@ func NewCustomConn(sessionChannel, cors string) Connection {
 	}
 	newConn.handler = newConn.NewHandler(cors)
 	newConn.toPushChan = make(chan event.Message)
+	newConn.log = log.NewPushLog(sessionChannel)
 	return newConn
 }
 
@@ -60,6 +63,7 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 		notifier := w.(http.CloseNotifier)
 
 		flusher.Flush()
+		c.log.Connection()
 
 		// Still using donovanhide here for the encoder
 		// holding off on gzip for now
@@ -70,7 +74,7 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 			select {
 			case <-notifier.CloseNotify():
 				// Convert to logger, maybe still use fmt for doctests
-				fmt.Println("client disconnected from channel: ", c.Channel())
+				c.log.Disconnection()
 				// Accomodate for multiple users on a channel here potentially.
 				// Not currently a concern.
 				c.Close()
@@ -83,17 +87,14 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 				if err := enc.Encode(ev); err != nil {
 					// Accomodate for multiple users on a channel here potentially.
 					// Not currently a concern.
+					c.log.Disconnection()
 					c.Close()
-					fmt.Println(err)
-					// TODO: put logger back on connection struct
-					// if srv.Logger != nil {
-					// 	srv.Logger.Println(err)
-					// }
 					return
 				}
 				// Flusher flushes the encoder's (enc) buffer to the client.
 				// It's an http library interface.
 				flusher.Flush()
+				c.log.MessageSent(ev)
 			}
 		}
 	}
@@ -126,6 +127,7 @@ func (c *CustomConnection) Channel() string {
 // closing with a check in our HandlerFunc.
 func (c *CustomConnection) Close() {
 	close(c.toPushChan)
+	c.log.Close()
 	c.Closed = true
 }
 

@@ -1,0 +1,2 @@
+INFO: logger.go:59: {"action":"connection","channel":"hello-multiplex","context":"event_pusher","data":"","event":INFOINFO: logger.go:68: {"action":"message_sent","channel":"hello-multiplex","context":"event_pusher","data":"{ \"event\": \"\", \"channel\": \"hello-world\", \"data\": \"this is data\"}","eveINFO: logger.go:50: {"action":"disconnection","channel":"hello-world","context":"event_pusher","data":"","event":""}
+"event":""}
