@@ -1,15 +1,15 @@
 package push
 
 import (
-	es "gopkg.in/antage/eventsource.v1"
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
-	"net/http"
 	"fmt"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	es "gopkg.in/antage/eventsource.v1"
+	"net/http"
 )
 
 // Manages the one-way push connection to a single browser. Enevlops
-// and isolates push method. Antage library is lightweight and does 
-// not create a mutliplex of it's own, but current implementation 
+// and isolates push method. Antage library is lightweight and does
+// not create a mutliplex of it's own, but current implementation
 // creating a dependable connection: https://github.com/antage/eventsource
 //
 // TODO: Consider adding a push method with ie/edge support:
@@ -18,9 +18,9 @@ import (
 //
 // https://caniuse.com/#search=websockets
 type AntageConnection struct {
-	channel     string
-	handler es.EventSource
-	toPushChan  chan event.Message
+	channel    string
+	handler    es.EventSource
+	toPushChan chan event.Message
 	// Closed bool
 }
 
@@ -28,9 +28,9 @@ func NewAntageConn(sessionChannel string) Connection {
 	handler := es.New(nil, nil)
 	eventChannel := make(chan event.Message, 1)
 	return &AntageConnection{
-		channel:     sessionChannel,
-		handler: handler,
-		toPushChan:  eventChannel,
+		channel:    sessionChannel,
+		handler:    handler,
+		toPushChan: eventChannel,
 	}
 }
 
@@ -47,13 +47,14 @@ func (c *AntageConnection) ServePUSH(w http.ResponseWriter, r *http.Request) {
 func (c *AntageConnection) Send(msg event.Message) {
 	c.toPushChan <- msg
 }
+
 // Returns the channel this connection is assigned to in the connList
 func (c *AntageConnection) Channel() string {
 	return c.channel
 }
 
-// Responsible for cleaning up the connection after disconnect. 
-// Should be called with defer when Msgs is used to clean up 
+// Responsible for cleaning up the connection after disconnect.
+// Should be called with defer when Msgs is used to clean up
 // disconnectioned broswer connections.
 // TODO: Improve to match CustomConnection as closely as possible
 func (c *AntageConnection) Close() {

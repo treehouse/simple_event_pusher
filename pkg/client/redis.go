@@ -1,8 +1,8 @@
 package client
 
 import (
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"github.com/go-redis/redis"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
 )
 
 // Stock redis events you can use in redis-cli:

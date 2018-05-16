@@ -1,10 +1,10 @@
 package mux_test
 
 import (
-	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
-	event "github.com/treehouse/simple_event_pusher/pkg/event"
-	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	"fmt"
+	push "github.com/treehouse/simple_event_pusher/pkg/connection"
+	event "github.com/treehouse/simple_event_pusher/pkg/event"
+	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
 	"reflect"
 	"sort"
 )

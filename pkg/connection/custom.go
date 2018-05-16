@@ -1,15 +1,15 @@
 package push
 
 import (
+	"fmt"
 	es "github.com/donovanhide/eventsource"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"net/http"
-	"fmt"
 )
 
 // Manages the one-way push connection to a single browser. Enevlops
 // and isolates push method, currently using minimal sections of the
-// donovanhide/eventsource library for encoding event bodies under 
+// donovanhide/eventsource library for encoding event bodies under
 // the hood: https://godoc.org/github.com/donovanhide/eventsource
 //
 // TODO: Consider adding a push method with ie/edge support:
@@ -18,16 +18,16 @@ import (
 //
 // https://caniuse.com/#search=websockets
 type CustomConnection struct {
-	channel     string
-	handler http.HandlerFunc
-	toPushChan  chan event.Message
-	Closed bool
+	channel    string
+	handler    http.HandlerFunc
+	toPushChan chan event.Message
+	Closed     bool
 }
 
 func NewCustomConn(sessionChannel, cors string) Connection {
 	newConn := &CustomConnection{
-		channel:     sessionChannel,
-		Closed: false,
+		channel: sessionChannel,
+		Closed:  false,
 	}
 	newConn.handler = newConn.NewHandler(cors)
 	newConn.toPushChan = make(chan event.Message)
@@ -50,7 +50,7 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 
-		// If the Handler is still active even though the connection is 
+		// If the Handler is still active even though the connection is
 		// closed, stop here. Otherwise the Handler may block indefinitely.
 		if c.Closed == true {
 			return
@@ -60,7 +60,7 @@ func (c *CustomConnection) NewHandler(cors string) http.HandlerFunc {
 		notifier := w.(http.CloseNotifier)
 
 		flusher.Flush()
-		
+
 		// Still using donovanhide here for the encoder
 		// holding off on gzip for now
 		useGzip := false
@@ -119,9 +119,9 @@ func (c *CustomConnection) Channel() string {
 	return c.channel
 }
 
-// Responsible for cleaning up the connection after disconnect. 
-// CustomConnection calls Close automatically when a browser 
-// disconnects to clean up any resources. By setting Closed to 
+// Responsible for cleaning up the connection after disconnect.
+// CustomConnection calls Close automatically when a browser
+// disconnects to clean up any resources. By setting Closed to
 // true, we avoid other browsers arriving at this route while it's
 // closing with a check in our HandlerFunc.
 func (c *CustomConnection) Close() {
@@ -131,8 +131,8 @@ func (c *CustomConnection) Close() {
 
 // So far, msgs is not needed by CustomConnection, but is required
 // by the Connection interface.
-// TODO: Consider factoring out the for loop in http.HandlerFunc 
+// TODO: Consider factoring out the for loop in http.HandlerFunc
 // to use it for easier testing.
 func (c *CustomConnection) Msgs() {
-	
+
 }

@@ -12,7 +12,7 @@ import (
 const (
 	DEFAULT_PORT                        = ":8080"
 	DEFAULT_REDIS_ADDR                  = "localhost:6379"
-	DEFAULT_REDIS_PUBSUB_CHANNEL_PREFIX        = "event_pusher"
+	DEFAULT_REDIS_PUBSUB_CHANNEL_PREFIX = "event_pusher"
 	DEFAULT_ACCESS_CONTROL_ALLOW_ORIGIN = "http://localhost:3001"
 )
 
@@ -57,9 +57,8 @@ func main() {
 // does not contain a Content-Type line, Write adds a Content-Type set
 // to the result of passing the initial 512 bytes of written data to
 // DetectContentType.
-// 
+//
 // So this is the only line needed for status 200 ok, text/plain
 func handleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
-

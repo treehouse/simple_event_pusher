@@ -1,10 +1,10 @@
 package mux
 
 import (
+	"fmt"
 	push "github.com/treehouse/simple_event_pusher/pkg/connection"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	"sync"
-	"fmt"
 )
 
 // Base data structure storing connections. Wrapped with ConnList

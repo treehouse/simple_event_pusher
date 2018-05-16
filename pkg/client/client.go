@@ -1,9 +1,9 @@
 package client
 
 import (
+	"fmt"
 	event "github.com/treehouse/simple_event_pusher/pkg/event"
 	mux "github.com/treehouse/simple_event_pusher/pkg/mux"
-	"fmt"
 )
 
 type Incoming interface {
